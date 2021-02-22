@@ -36,6 +36,7 @@ from mycroft import intent_handler
 from mycroft.audio import wait_while_speaking
 from mycroft.messagebus.message import Message
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
+from mycroft.util.format import join_list
 
 
 HOMEPAGE_URL = "https://www.pandora.com"
@@ -577,19 +578,14 @@ class PianobarSkill(CommonPlaySkill):
             self.handle_pause()
 
         # build the list of stations
-        l = []
-        for station in self.play_info.get("stations"):
-            l.append(station[0])  # [0] = name
-        if len(l) == 0:
+        station_names = []
+        for station in self.settings.get("stations"):
+            station_names.append(station[0])  # [0] = name
+        if len(station_names) == 0:
             self.speak_dialog("no.stations")
             return
-
-        # read the list
-        if len(l) > 1:
-            list = ", ".join(l[:-1]) + " " + self.translate("and") + " " + l[-1]
-        else:
-            list = str(l)
-        self.speak_dialog("subscribed.to.stations", {"stations": list})
+        speakable_list = join_list(station_names, self.translate("and"))
+        self.speak_dialog("subscribed.to.stations", {"stations": speakable_list})
 
         if is_playing:
             wait_while_speaking()
