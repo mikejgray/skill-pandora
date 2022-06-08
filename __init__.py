@@ -514,7 +514,7 @@ class PianobarSkill(CommonPlaySkill):
 
     def handle_next_song(self, _=None):
         """Skip to next song on current Pandora station."""
-        if self.process and self.piano_bar_state == "playing":
+        if self.process:
             self.enclosure.mouth_think()
             self.cmd("n")
             self.piano_bar_state = "playing"
