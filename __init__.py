@@ -97,7 +97,7 @@ class PianobarSkill(CommonPlaySkill):
         self.on_websettings_changed()
         self.add_event("mycroft.stop", self.stop)
 
-    def cps_match_query_phrase(self, phrase):
+    def CPS_match_query_phrase(self, phrase):
         if not self._is_setup:
             if self.voc_match(phrase, "Pandora"):
                 # User is most likely trying to use Pandora, e.g.
@@ -123,7 +123,7 @@ class PianobarSkill(CommonPlaySkill):
             # "play pandora" or "play some music on pandora"
             return ("pandora", CPSMatchLevel.MULTI_KEY)
 
-    def cps_start(self, _, data):
+    def CPS_start(self, _, data):
         """Start playback when requested by the Playback Control Skill.
         Arguments:
             _ (str): Utterance used to trigger the playback (not used)
