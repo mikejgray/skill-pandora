@@ -208,7 +208,6 @@ class PianobarSkill(CommonPlaySkill):
 
         config_path = join(self.pianobar_path, "config")
         with open(config_path, "w+") as file:
-
             # grabs the tls_key needed
             tls_key = subprocess.check_output(
                 "openssl s_client -connect tuner.pandora.com:443 \
@@ -295,7 +294,7 @@ class PianobarSkill(CommonPlaySkill):
         """Issue commands to the Pianobar process."""
         try:
             self.process.stdin.write(cmd_str.encode())
-            self.process.stdin.flush()  # TODO: Handle
+            self.process.stdin.flush()
         except Exception as err:
             self.log.debug(f"Recoverable exception handled {err}")
 
@@ -533,10 +532,13 @@ class PianobarSkill(CommonPlaySkill):
     def handle_pause(self, _=None):
         """Pause Pandora playback."""
         if self.process:
-            self.cmd("S")
-            self.process.stdin.flush()  # TODO:
-            self.piano_bar_state = "paused"
-            self._stop_monitor()
+            try:
+                self.cmd("S")
+                self.process.stdin.flush()
+                self.piano_bar_state = "paused"
+                self._stop_monitor()
+            except Exception as err:
+                self.log.debug(f"Recoverable exception handled {err}")
 
     def handle_resume_song(self, _=None):
         """Resume Pandora playback."""
