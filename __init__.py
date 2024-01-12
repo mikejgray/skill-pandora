@@ -64,20 +64,19 @@ class PianobarSkill(CommonPlaySkill):
     def __init__(self, bus=None, skill_id="", *args, **kwargs):
         super().__init__(bus=bus, name="PandoraSkill")
         self.process = None
-        self.piano_bar_state = None  # 'playing', 'paused', 'autopause'
+        self.piano_bar_state = ""  # 'playing', 'paused', 'autopause'
         self.current_station = "0"
         self._is_setup = False
         self.vocabs = []  # keep a list of vocabulary words
-        self.pianobar_path = expanduser("~/.config/pianobar")
         self._pianobar_initated = False
         self.debug_mode = False
         self.idle_count = 0
-        play_info_file = join(self.file_system.path, "play-info.json")
-        self.play_info = JsonStorage(play_info_file)
-
         subprocess.call(["killall", "-9", "pianobar"])
 
     def initialize(self):
+        self.pianobar_path = expanduser("~/.config/pianobar")
+        play_info_file = join(self.file_system.path, "play-info.json")
+        self.play_info = JsonStorage(play_info_file)
         self._load_vocab_files()
 
         # Initialize settings values
