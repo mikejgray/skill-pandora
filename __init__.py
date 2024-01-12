@@ -1,3 +1,8 @@
+# TODO: Remove unused OVOS imports
+from ovos_workshop.decorators import intent_handler
+from ovos_workshop.skills import OVOSSkill
+from ovos_utils.intents import IntentBuilder
+from ovos_bus_client.message import Message
 # The MIT License (MIT)
 #
 # Copyright (c) 2016 Ethan Ward
@@ -32,11 +37,16 @@ from fuzzywuzzy import fuzz, process as fuzz_process
 from json_database import JsonStorage
 
 from adapt.intent import IntentBuilder
-from mycroft import intent_handler
-from mycroft.audio import wait_while_speaking
-from mycroft.messagebus.message import Message
-from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
-from mycroft.util.format import join_list
+# TODO: Remove all Mycroft imports
+# from mycroft import intent_handler
+# TODO: Remove all Mycroft imports
+# from mycroft.audio import wait_while_speaking
+# TODO: Remove all Mycroft imports
+# from mycroft.messagebus.message import Message
+# TODO: Remove all Mycroft imports
+# from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
+# TODO: Remove all Mycroft imports
+# from mycroft.util.format import join_list
 
 HOMEPAGE_URL = "https://www.pandora.com"
 LOGIN_URL = "https://www.pandora.com/api/v1/auth/login"
@@ -61,6 +71,8 @@ def get_pandora_user_info(username, password):
 
 class PianobarSkill(CommonPlaySkill):
     def __init__(self):
+# TODO: Remove name= parameter from super().__init__
+# TODO: Replace args with *args, **kwargs
         super().__init__(name="PianobarSkill")
         self.process = None
         self.piano_bar_state = None  # 'playing', 'paused', 'autopause'
@@ -628,5 +640,6 @@ class PianobarSkill(CommonPlaySkill):
         return False
 
 
+# TODO: Remove create_skill() function
 def create_skill():
     return PianobarSkill()
