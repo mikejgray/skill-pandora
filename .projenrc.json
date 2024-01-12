@@ -6,6 +6,6 @@
   "authorAddress": "mike@graywind.org",
   "authorHandle": "mikejgray",
   "repositoryUrl": "https://github.com/mikejgray/skill-pandora",
-  "packageDir": ".",
+  "packageDir": "skill_pandora",
   "skillClass": "PianobarSkill"
 }
