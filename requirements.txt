@@ -1,7 +1,0 @@
-ovos-utils
-ovos-bus-client
-ovos-workshop
-# Your requirements here
-
-fuzzywuzzy==0.18
-json_database==0.5.5

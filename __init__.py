@@ -1,8 +1,6 @@
-# TODO: Remove unused OVOS imports
-from ovos_workshop.decorators import intent_handler
-from ovos_workshop.skills import OVOSSkill
-from ovos_utils.intents import IntentBuilder
-from ovos_bus_client.message import Message
+# pylint: disable=missing-module-docstring,missing-class-docstring,missing-function-docstring,
+# pylint: disable=broad-exception-caught,invalid-name,attribute-defined-outside-init
+"""Classic Mycroft Pandora skill, adapted for use in OVOS without OCP."""
 # The MIT License (MIT)
 #
 # Copyright (c) 2016 Ethan Ward
@@ -29,24 +27,17 @@ import json
 import shutil
 import subprocess
 import time
-from os import makedirs, remove, listdir, path
-from os.path import dirname, join, exists, expanduser, isfile, isdir
+from os import listdir, makedirs, path, remove
+from os.path import dirname, exists, expanduser, isdir, isfile, join
 
 import requests
 from fuzzywuzzy import fuzz, process as fuzz_process
 from json_database import JsonStorage
-
-from adapt.intent import IntentBuilder
-# TODO: Remove all Mycroft imports
-# from mycroft import intent_handler
-# TODO: Remove all Mycroft imports
-# from mycroft.audio import wait_while_speaking
-# TODO: Remove all Mycroft imports
-# from mycroft.messagebus.message import Message
-# TODO: Remove all Mycroft imports
-# from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
-# TODO: Remove all Mycroft imports
-# from mycroft.util.format import join_list
+from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
+from ovos_audio.utils import wait_while_speaking
+from ovos_bus_client.message import Message
+from ovos_utils.intents import IntentBuilder
+from ovos_workshop.decorators import intent_handler
 
 HOMEPAGE_URL = "https://www.pandora.com"
 LOGIN_URL = "https://www.pandora.com/api/v1/auth/login"
@@ -54,7 +45,7 @@ LOGIN_URL = "https://www.pandora.com/api/v1/auth/login"
 
 def get_pandora_login_token():
     """A login token must be fetched from the website before logging in"""
-    response = requests.get(HOMEPAGE_URL)
+    response = requests.get(HOMEPAGE_URL, timeout=5)
     cookies = response.headers["Set-Cookie"]
     token = cookies.split("csrftoken=")[-1].split(";")[0]
     return token
@@ -65,18 +56,16 @@ def get_pandora_user_info(username, password):
     token = get_pandora_login_token()
     headers = {"Cookie": "csrftoken=" + token, "X-CsrfToken": token}
     data = {"username": username, "password": password}
-    response = requests.post(LOGIN_URL, json=data, headers=headers)
+    response = requests.post(LOGIN_URL, json=data, headers=headers, timeout=5)
     return response.json() if response.status_code == 200 else None
 
 
 class PianobarSkill(CommonPlaySkill):
-    def __init__(self):
-# TODO: Remove name= parameter from super().__init__
-# TODO: Replace args with *args, **kwargs
-        super().__init__(name="PianobarSkill")
+    def __init__(self, bus=None, skill_id=""):
+        super().__init__(bus=bus, name=skill_id)
         self.process = None
         self.piano_bar_state = None  # 'playing', 'paused', 'autopause'
-        self.current_station = None
+        self.current_station = "0"
         self._is_setup = False
         self.vocabs = []  # keep a list of vocabulary words
         self.pianobar_path = expanduser("~/.config/pianobar")
@@ -165,16 +154,16 @@ class PianobarSkill(CommonPlaySkill):
             self.cancel_scheduled_event("IdleCheck")
             return
 
-        if self.enclosure.display_manager.get_active() == "":
-            # No activity, start to fall asleep
-            self.idle_count += 1
+        # if self.enclosure.mouth_display.get_active() == "":
+        #     # No activity, start to fall asleep
+        #     self.idle_count += 1
 
-            if self.idle_count >= 2:
-                # Resume playback after 2 seconds of being idle
-                self.cancel_scheduled_event("IdleCheck")
-                self.handle_resume_song()
-        else:
-            self.idle_count = 0
+        #     if self.idle_count >= 2:
+        #         # Resume playback after 2 seconds of being idle
+        #         self.cancel_scheduled_event("IdleCheck")
+        #         self.handle_resume_song()
+        # else:
+        #     self.idle_count = 0
 
     ######################################################################
 
@@ -219,7 +208,7 @@ class PianobarSkill(CommonPlaySkill):
             makedirs(self.pianobar_path)
 
         config_path = join(self.pianobar_path, "config")
-        with open(config_path, "w+") as file:
+        with open(config_path, "w+", encoding="utf-8") as file:
             # grabs the tls_key needed
             tls_key = subprocess.check_output(
                 "openssl s_client -connect tuner.pandora.com:443 \
@@ -246,15 +235,16 @@ class PianobarSkill(CommonPlaySkill):
             )
 
         # Raspbian requires adjustments to audio output to use PulseAudio
-        platform = self.config_core["enclosure"].get("platform")
+        enclosure_config = self.config_core["enclosure"] or {}
+        platform = enclosure_config.get("platform")
         if platform == "picroft" or platform == "mycroft_mark_1":
             libao_path = expanduser("~/.libao")
             if not isfile(libao_path):
-                with open(libao_path, "w") as libaofile:
+                with open(libao_path, "w", encoding="utf-8") as libaofile:
                     libaofile.write("dev=0\ndefault_driver=pulse")
                 self.speak_dialog("configured.please.reboot")
                 wait_while_speaking()
-                self.emitter.emit(Message("system.reboot"))
+                self.bus.emit(Message("system.reboot"))
 
     def _load_vocab_files(self):
         # Keep a list of all the vocabulary words for this skill.  Later
@@ -264,7 +254,7 @@ class PianobarSkill(CommonPlaySkill):
         if path.exists(vocab_dir):
             for vocab_type in listdir(vocab_dir):
                 if vocab_type.endswith(".voc"):
-                    with open(join(vocab_dir, vocab_type), "r") as voc_file:
+                    with open(join(vocab_dir, vocab_type), "r", encoding="utf-8") as voc_file:
                         for line in voc_file:
                             parts = line.strip().split("|")
                             vocab = parts[0]
@@ -304,11 +294,11 @@ class PianobarSkill(CommonPlaySkill):
 
     def cmd(self, cmd_str):
         """Issue commands to the Pianobar process."""
-        try:
+        if self.process and self.process.stdin:
             self.process.stdin.write(cmd_str.encode())
             self.process.stdin.flush()
-        except Exception as err:
-            self.log.debug(f"Recoverable exception handled {err}")
+        else:
+            self.log.debug("No process stdin to write to, moving on")
 
     def troubleshoot_auth_error(self):
         """Assist user to troubleshoot if unable to authenticate."""
@@ -356,7 +346,7 @@ class PianobarSkill(CommonPlaySkill):
             shutil.rmtree(info_path)
 
         try:
-            with open(info_path, "r") as info_file:
+            with open(info_path, "r", encoding="utf-8") as info_file:
                 info = json.load(info_file)
         except Exception:
             info = {}
@@ -437,7 +427,7 @@ class PianobarSkill(CommonPlaySkill):
             probabilities = fuzz_process.extractOne(utterance, stations, scorer=fuzz.ratio)
             if self.debug_mode:
                 self.log.info("Probabilities: " + str(probabilities))
-            if probabilities[1] > 70:
+            if probabilities and probabilities[1] > 70:
                 station = probabilities[0]
                 return (station, probabilities[1])
             else:
@@ -462,7 +452,7 @@ class PianobarSkill(CommonPlaySkill):
 
         self.enclosure.mouth_think()
         if station:
-            for channel in self.play_info.get("stations"):
+            for channel in self.play_info.get("stations", []):
                 if station == channel[0]:
                     self.cmd("s")
                     self.current_station = str(channel[1])
@@ -478,7 +468,7 @@ class PianobarSkill(CommonPlaySkill):
             # try catch block because some systems
             # may not load pianobar info in time
             try:
-                channel = self.play_info.get("stations")[0]
+                channel = self.play_info.get("stations", [])[0]
                 if self.debug_mode:
                     self.log.info(channel)
                 if channel:
@@ -547,10 +537,11 @@ class PianobarSkill(CommonPlaySkill):
             try:
                 self.cmd("S")
                 self.process.stdin.flush()
-                self.piano_bar_state = "paused"
-                self._stop_monitor()
             except Exception as err:
                 self.log.debug(f"Recoverable exception handled {err}")
+            finally:
+                self.piano_bar_state = "paused"
+                self._stop_monitor()
 
     def handle_resume_song(self, _=None):
         """Resume Pandora playback."""
@@ -564,7 +555,9 @@ class PianobarSkill(CommonPlaySkill):
         if self._is_setup:
             # Examine the whole utterance to see if the user requested a
             # station by name
-            station = self._extract_station(message.data["utterance"])
+            station = None
+            if message and message.data.get("station"):
+                station = self._extract_station(message.data["utterance"])
 
             if station is not None:
                 self._play_station(station[0])
@@ -582,13 +575,13 @@ class PianobarSkill(CommonPlaySkill):
 
         # build the list of stations
         station_names = []
-        for station in self.play_info.get("stations"):
+        for station in self.play_info.get("stations", []):
             station_names.append(station[0])  # [0] = name
         if len(station_names) == 0:
             self.speak_dialog("no.stations")
             return
 
-        speakable_list = join_list(station_names, self.translate("and"))
+        speakable_list = "and".join(station_names)
         self.speak_dialog("subscribed.to.stations", {"stations": speakable_list})
 
         if is_playing:
@@ -631,6 +624,7 @@ class PianobarSkill(CommonPlaySkill):
         super(PianobarSkill, self).shutdown()
 
     def converse(self, utterances, lang="en-us"):
+        self.log.debug(f"Received utterances in {lang}: {utterances}")
         self.cmd("P")  # always resume playing
         if self.process and self.piano_bar_state == "playing":
             # consume all utterances while playing
@@ -640,6 +634,5 @@ class PianobarSkill(CommonPlaySkill):
         return False
 
 
-# TODO: Remove create_skill() function
 def create_skill():
     return PianobarSkill()
