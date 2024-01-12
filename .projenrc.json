@@ -1,5 +1,11 @@
 {
   "type": "@mikejgray/ovos-skill-projen.OVOSSkillProject",
-  "name": "skill-pandora-mycroft",
-  "retrofit": true
+  "retrofit": true,
+  "name": "skill-pandora",
+  "author": "Mycroft.AI/Mike Gray",
+  "authorAddress": "mike@graywind.org",
+  "authorHandle": "mikejgray",
+  "repositoryUrl": "https://github.com/mikejgray/skill-pandora",
+  "packageDir": ".",
+  "skillClass": "PianobarSkill"
 }

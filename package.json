@@ -1,13 +1,6 @@
 {
   "devDependencies": {
     "@mikejgray/ovos-skill-projen": "^0.0.0",
-    "projen": "^0.79.0",
-    "name": "skill-pandora",
-    "author": "Mycroft.AI/Mike Gray",
-    "authorAddress": "mike@graywind.org",
-    "authorHandle": "mikejgray",
-    "repositoryUrl": "https://github.com/mikejgray/skill-pandora",
-    "packageDir": ".",
-    "skillClass": "PianobarSkill"
+    "projen": "^0.79.0"
   }
 }
