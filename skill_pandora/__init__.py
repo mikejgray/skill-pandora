@@ -71,7 +71,7 @@ class PianobarSkill(CommonPlaySkill):
         self._pianobar_initated = False
         self.debug_mode = False
         self.idle_count = 0
-        subprocess.call(["killall", "-9", "pianobar"])
+        subprocess.call(["pkill", "-9", "pianobar"])
 
     def initialize(self):
         self.pianobar_path = expanduser("~/.config/pianobar")
