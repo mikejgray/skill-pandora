@@ -61,8 +61,8 @@ def get_pandora_user_info(username, password):
 
 
 class PianobarSkill(CommonPlaySkill):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, bus=None, skill_id="", *args, **kwargs):
+        super().__init__(bus=bus, name="PandoraSkill")
         self.process = None
         self.piano_bar_state = None  # 'playing', 'paused', 'autopause'
         self.current_station = "0"
