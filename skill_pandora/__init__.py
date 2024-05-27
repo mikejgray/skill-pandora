@@ -36,7 +36,8 @@ from json_database import JsonStorage
 from mycroft.skills.common_play_skill import CommonPlaySkill, CPSMatchLevel
 from ovos_audio.utils import wait_while_speaking
 from ovos_bus_client.message import Message
-from ovos_workshop.decorators import intent_handler, IntentBuilder
+from ovos_workshop.intents import IntentBuilder
+from ovos_workshop.decorators import intent_handler
 
 HOMEPAGE_URL = "https://www.pandora.com"
 LOGIN_URL = "https://www.pandora.com/api/v1/auth/login"
